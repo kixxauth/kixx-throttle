@@ -4,7 +4,12 @@
   "description": "An abstract interface for rate limiting actions, commands, or events.",
   "main": "index.js",
   "scripts": {
-    "test": "test"
+    "test": "eslint ./ && node ./test/run-tests.js",
+    "lint": "eslint ./"
+  },
+  "devDependencies": {
+    "fakeredis": "2.0.0",
+    "sinon": "2.3.5"
   },
   "repository": {
     "type": "git",
