@@ -302,6 +302,33 @@ it('emits an error if removeItem fails asynchronously', function (next) {
 	promise.then(resultHandler).catch(next);
 });
 
+it('calls removeItem if tryLockItem fails synchronously', function (next) {
+	var store = createFakeStore({
+		pushAndTryLockItem: function (_a, task, cb) {
+			return cb(null, [task]);
+		},
+		tryLockItem: function () {
+			throw new Error('tryLockItem sync error');
+		}
+	});
+
+	var config = {
+		qid: 'qid-test-000',
+		ratePerMinute: 30000 // Will result in interval of 2ms
+	};
+
+	var createEnqueue = kixxThrottle.enqueue(store);
+	var enqueue = createEnqueue(config);
+
+	sinon.spy(store, 'removeItem');
+
+	enqueue(noop).catch(noop);
+
+	return delay(10, function () {
+		assert.equal(store.removeItem.callCount, 1);
+	}).then(next, next);
+});
+
 // ---------------------------------------------------------------------------
 //  Utilties
 // ---------------------------------------------------------------------------

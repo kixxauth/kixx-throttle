@@ -122,7 +122,7 @@ exports.enqueue = curry3(function enqueue(store, config, fn) {
 			try {
 				tryLockItem(qid, task.id, handleQueueResponse);
 			} catch (err) {
-				emitter.close();
+				removeTask(0);
 				return reject(err);
 			}
 		}
