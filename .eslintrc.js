@@ -1,0 +1,89 @@
+module.exports = {
+	"env": {
+		"commonjs": true
+	},
+	"globals": {
+		"Promise": true,
+		"console": true,
+		"setTimeout": true,
+		"clearTimeout": true
+	},
+	"extends": "eslint:recommended",
+	"rules": {
+		"strict": [
+			"error"
+		],
+		"block-scoped-var": [
+			"error"
+		],
+		"vars-on-top": [
+			"error"
+		],
+		"no-caller": [
+			"error"
+		],
+		"semi": [
+			"error",
+			"always"
+		],
+		"curly": [
+			"error",
+			"multi"
+		],
+		"eqeqeq": [
+			"error",
+			"always"
+		],
+		"wrap-iife": [
+			"error"
+		],
+		"no-shadow-restricted-names": [
+			"error"
+		],
+		"no-catch-shadow": [
+			"error"
+		],
+		"no-undefined": [
+			"error"
+		],
+		"no-labels": [
+			"error"
+		],
+		"for-direction": [
+			"error"
+		],
+		"no-extra-parens": [
+			"error"
+		],
+		"no-prototype-builtins": [
+			"error"
+		],
+		"no-template-curly-in-string": [
+			"error"
+		],
+		"array-callback-return": [
+			"error"
+		],
+		"no-floating-decimal": [
+			"error"
+		],
+		"radix": [
+			"error"
+		],
+		"no-multi-spaces": [
+			"error"
+		],
+		"indent": [
+			"error",
+			"tab"
+		],
+		"quotes": [
+			"error",
+			"single"
+		],
+		"no-warning-comments": [
+			"warn",
+			{location: "anywhere"}
+		]
+	}
+};
