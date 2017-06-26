@@ -83,6 +83,7 @@ exports.enqueue = curry3(function enqueue(store, config, fn) {
 	// Create a promise for queueing and executing the tasks which we'll return to the caller.
 	promise = new Promise(function (resolve, reject) {
 		var task = exports.createTask({qid: qid, delay: intervalMs});
+		console.error('start task', task.id);
 
 		// Remove the task from the queue; releasing the lock.
 		function removeTask(delay) {
@@ -129,6 +130,9 @@ exports.enqueue = curry3(function enqueue(store, config, fn) {
 
 		// Generalized handler for polling the store.
 		function handleQueueResponse(err, queue) {
+			console.error('current task.id %s', task.id);
+			console.error('error', err);
+			console.error('queue', queue);
 			var queuedTask;
 			var wait;
 
@@ -139,6 +143,13 @@ exports.enqueue = curry3(function enqueue(store, config, fn) {
 
 			// Search the queue stack to find our task.
 			queuedTask = findById(task.id, queue);
+
+			if (!queuedTask) {
+				removeTask(0);
+				return reject(new Error(
+					'Task id "' + + '" mysteriously disappeared from the queue'
+				));
+			}
 
 			// If we were given a lock, it's time to execute.
 			if (queuedTask.locked) return executeTask();
@@ -154,9 +165,12 @@ exports.enqueue = curry3(function enqueue(store, config, fn) {
 		try {
 			pushAndTryLockItem(qid, task, handleQueueResponse);
 		} catch (err) {
+			console.error('FAILED to start', task.id, err.message);
 			removeTask(0);
 			return reject(err);
 		}
+
+		console.error('on its own', task.id);
 	});
 
 	// Provide a way for the caller to add event listeners.

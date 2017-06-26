@@ -329,6 +329,98 @@ it('calls removeItem if tryLockItem fails synchronously', function (next) {
 	}).then(next, next);
 });
 
+it('works like it should', function (next) {
+	// Use a single store implementation representing a single Redis instance.
+	var store = createFakeStore();
+
+	// Use the same config between enqueue instances.
+	var config = {
+		qid: 'qid-test-000',
+		ratePerMinute: 600 // Will result in interval of 100ms
+	};
+
+	// Values "computed" and returned by the tasks.
+	var value1 = {value: 1};
+	var value2 = {value: 2};
+	var value3 = {value: 3};
+	var value4 = {value: 4};
+
+	var error1 = new Error('error1');
+	var error2 = new Error('error2');
+
+	// A container (namespace) for all the things in virtual node A.
+	var nodeA = {
+		task1: sinon.spy(always(Promise.resolve(value1))),
+		task2: sinon.spy(always(value2)),
+		task3: sinon.spy(function () { return Promise.reject(error1); }),
+		enqueue: kixxThrottle.enqueue(store, config),
+		onError: sinon.spy(),
+		errorHandler: sinon.spy(),
+		resultHandler: sinon.spy()
+	};
+
+	// A container (namespace) for all the things in virtual node B.
+	var nodeB = {
+		task1: sinon.spy(function () { throw error2; }),
+		task2: sinon.spy(always(value3)),
+		task3: sinon.spy(always(Promise.resolve(value4))),
+		enqueue: kixxThrottle.enqueue(store, config),
+		onError: sinon.spy(),
+		errorHandler: sinon.spy(),
+		resultHandler: sinon.spy()
+	};
+
+	var promise;
+
+	// Spy on all the store methods.
+	sinon.spy(store, 'pushAndTryLockItem');
+	sinon.spy(store, 'tryLockItem');
+	sinon.spy(store, 'removeItem');
+
+	console.error('\n\n --- START ---\n');
+
+	// Queue the first task for Node A
+	promise = nodeA.enqueue(nodeA.task1);
+	promise.on('error', nodeA.onError);
+	promise.then(nodeA.resultHandler, nodeA.errorHandler);
+
+	// Queue the second task for Node A
+	promise = nodeA.enqueue(nodeA.task2);
+	promise.on('error', nodeA.onError);
+	promise.then(nodeA.resultHandler, nodeA.errorHandler);
+
+	// Queue the third task for Node A
+	promise = nodeA.enqueue(nodeA.task3);
+	promise.on('error', nodeA.onError);
+	promise.then(nodeA.resultHandler, nodeA.errorHandler);
+
+	// Node B will wait for just a bit.
+	delay(10, function () {
+		// Queue the first task for Node B
+		promise = nodeB.enqueue(nodeB.task1);
+		promise.on('error', nodeB.onError);
+		promise.then(nodeB.resultHandler, nodeB.errorHandler);
+
+		// Queue the second task for Node B
+		promise = nodeB.enqueue(nodeB.task2);
+		promise.on('error', nodeB.onError);
+		promise.then(nodeB.resultHandler, nodeB.errorHandler);
+
+		// Queue the second task for Node B
+		// This one is special, because it's the last one.
+		promise = nodeB.enqueue(nodeB.task3);
+		promise.on('error', nodeB.onError);
+
+		return promise
+			.then(nodeB.resultHandler, nodeB.errorHandler)
+			.then(function () {
+				assert.ok(true, 'okeedokee');
+				next();
+				return null;
+			});
+	}).catch(next);
+}, 2000);
+
 // ---------------------------------------------------------------------------
 //  Utilties
 // ---------------------------------------------------------------------------
@@ -460,7 +552,8 @@ function createFakeStore(mixin) {
 
 				if (err) return cb(err);
 
-				items = JSON.parse('[' + results[1].join(',') + ']');
+				items = results[1] || [];
+				items = JSON.parse('[' + items.join(',') + ']');
 				lockedId = results[2];
 
 				items = items.map(function (item) {
