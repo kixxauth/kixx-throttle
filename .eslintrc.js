@@ -75,7 +75,8 @@ module.exports = {
 		],
 		"indent": [
 			"error",
-			"tab"
+			"tab",
+			{"SwitchCase": 1}
 		],
 		"quotes": [
 			"error",
