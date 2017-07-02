@@ -28,7 +28,11 @@ module.exports = {
 		],
 		"curly": [
 			"error",
-			"multi"
+			"multi-line"
+		],
+		"comma-dangle": [
+			"error",
+			"never"
 		],
 		"eqeqeq": [
 			"error",
